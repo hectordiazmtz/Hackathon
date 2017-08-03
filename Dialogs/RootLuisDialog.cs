@@ -1,4 +1,4 @@
-﻿namespace LuisBot.Dialogs
+namespace LuisBot.Dialogs
 {
     using System;
     using System.Collections.Generic;
@@ -57,13 +57,13 @@
                 {
                     participants.Add(friendEntityRecommendation.Entity, Int32.Parse(numberEntityRecommendation.Entity));
                     numberShares += Int32.Parse(numberEntityRecommendation.Entity);
-                    await context.SayAsync($"You said '{friendEntityRecommendation.Entity}' with number '{numberEntityRecommendation.Entity}'", $"You said '{friendEntityRecommendation.Entity}' with number '{numberEntityRecommendation.Entity}'");
+                    await context.SayAsync($"You added '{friendEntityRecommendation.Entity}' who owes '{numberEntityRecommendation.Entity}' shares", $"You added '{friendEntityRecommendation.Entity}' who owes '{numberEntityRecommendation.Entity}' shares");
                 }
                 else
                 {
                     participants.Add(friendEntityRecommendation.Entity, 1);
                     numberShares++;
-                    await context.SayAsync($"You said '{friendEntityRecommendation.Entity}'", $"You said '{friendEntityRecommendation.Entity}'");
+                    await context.SayAsync($"You added '{friendEntityRecommendation.Entity}'", $"You added '{friendEntityRecommendation.Entity}'");
                 }
             }
 
@@ -110,6 +110,33 @@
             Double amtPerShare = Math.Round(billTotal / numberShares, 2);
 
             await context.SayAsync($"Everyone owes '{amtPerShare}'", $"Everyone owes '{amtPerShare}'");
+
+            var resultMessage = context.MakeMessage();
+            resultMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+            resultMessage.Attachments = new List<Attachment>();
+
+            foreach (String participant in participants.Keys)
+            {
+                ThumbnailCard thumbnailCard = new ThumbnailCard()
+                {
+                    Title = participant,
+                    Text = "$"+amtPerShare*participants[participant],
+                    Images = new List<CardImage>()
+                        {
+                            new CardImage() { Url = "https://www.spreadshirt.com/image-server/v1/designs/10267597,width=178,height=178/white-dollar-sign.png" }
+                        },
+                };
+
+                resultMessage.Attachments.Add(thumbnailCard.ToAttachment());
+            }
+
+            await context.PostAsync(resultMessage);
+
+            amountPaid = new Dictionary<string, double>();
+            participants = new Dictionary<string, int>();
+
+            billTotal = 0.0;
+            numberShares = 0;
 
             context.Done<object>(null);
         }
